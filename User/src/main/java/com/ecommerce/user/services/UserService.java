@@ -9,6 +9,8 @@ import com.ecommerce.user.models.Address;
 import com.ecommerce.user.models.User;
 import com.ecommerce.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,6 +20,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    private static final Logger logger= LoggerFactory.getLogger(UserService.class);
+
     private final UserRepository userRepository;
 //    private List<User> userList = new ArrayList<>();
 //    private Long nextId = 1L;
@@ -36,6 +41,7 @@ public class UserService {
     }
 
     public Optional<UserResponse> fetchUser(Long id) {
+        logger.info("Entered in getUser method");
         return userRepository.findById(id)
                 .map(this::mapToUserResponse);
     }
