@@ -10,28 +10,28 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 public class GatewayConfig {
-
-    @Bean
-    public RedisRateLimiter redisRateLimiter(){
-        return new RedisRateLimiter(1,1,1);
-    }
-
-    @Bean
-    public KeyResolver hostnameKeyResolver(){
-        return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getHostName());
-    }
+//
+//    @Bean
+//    public RedisRateLimiter redisRateLimiter(){
+//        return new RedisRateLimiter(1,1,1);
+//    }
+//
+//    @Bean
+//    public KeyResolver hostnameKeyResolver(){
+//        return exchange -> Mono.just(exchange.getRequest().getRemoteAddress().getHostName());
+//    }
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder){
         return builder.routes()
                 .route("product-service",r->r
                         .path("/api/products/**")
-                        .filters(f->f.circuitBreaker(config->config
-                                .setName("ecomBreaker")
-                                .setFallbackUri("forward:/fallback/products"))
-                                .requestRateLimiter(config->config
-                                        .setRateLimiter(redisRateLimiter())
-                                        .setKeyResolver(hostnameKeyResolver())))
+//                        .filters(f->f.circuitBreaker(config->config
+//                                .setName("ecomBreaker")
+//                                .setFallbackUri("forward:/fallback/products")))
+//                                .requestRateLimiter(config->config
+//                                        .setRateLimiter(redisRateLimiter())
+//                                        .setKeyResolver(hostnameKeyResolver())))
                         .uri("lb://PRODUCT-SERVICE"))
                 .route("user-service", r -> r
                         .path("/api/users/**")

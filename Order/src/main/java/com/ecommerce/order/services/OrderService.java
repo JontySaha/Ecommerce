@@ -1,5 +1,6 @@
 package com.ecommerce.order.services;
 
+import com.ecommerce.order.dto.OrderCreatedEvent;
 import com.ecommerce.order.dto.OrderItemDTO;
 import com.ecommerce.order.dto.OrderResponse;
 import com.ecommerce.order.dto.OrderStatus;
@@ -8,17 +9,21 @@ import com.ecommerce.order.models.Order;
 import com.ecommerce.order.models.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class OrderService {
     private final CartService cartService;
     private final OrderRepository orderRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     public Optional<OrderResponse> createOrder(String userId) {
         // Validate for cart items
@@ -61,7 +66,29 @@ public class OrderService {
         // Clear the cart
         cartService.clearCart(userId);
 
+        OrderCreatedEvent orderCreatedEvent= new OrderCreatedEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getStatus(),
+                mapToOrderItemDTO(savedOrder.getItems()),
+                savedOrder.getTotalAmount(),
+                savedOrder.getCreatedAt()
+        );
+
+        System.out.println(orderCreatedEvent);
+
+        rabbitTemplate.convertAndSend("order.exchange","order.tracking",orderCreatedEvent);
+
         return Optional.of(mapToOrderResponse(savedOrder));
+    }
+
+    private List<OrderItemDTO> mapToOrderItemDTO(List<OrderItem> items){
+        return items.stream().map(i->new OrderItemDTO(i.getId(),
+                i.getProductId(),
+                i.getQuantity(),
+                i.getPrice(),
+                i.getPrice().multiply(new BigDecimal(i.getQuantity())))
+        ).collect(Collectors.toList());
     }
 
     private OrderResponse mapToOrderResponse(Order order) {
